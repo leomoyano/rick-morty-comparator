@@ -197,6 +197,9 @@ body {
   color: var(--muted);
   text-align: center;
   padding: 18px;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
 }
 
 .stateText {
@@ -205,6 +208,21 @@ body {
 
 .stateAction {
   margin-top: 10px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #cbd5e1;
+  border-top-color: var(--accent);
+  border-radius: 999px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .selectionInfo {

@@ -17,7 +17,7 @@ export function CharacterPanel({
   onSelectCharacter
 }: CharacterPanelProps) {
   const [page, setPage] = useState<number>(1);
-  const { data, isLoading, error, refetch } = useCharactersPage(page);
+  const { data, isLoading, loadingMessage, error, refetch } = useCharactersPage(page);
 
   const totalPages = data?.info.pages ?? 1;
   const canGoPrev = page > 1 && !isLoading;
@@ -55,6 +55,7 @@ export function CharacterPanel({
         selectedCharacterId={selectedCharacterId}
         onSelectCharacter={onSelectCharacter}
         isLoading={isLoading}
+        loadingMessage={loadingMessage}
         error={error}
         onRetry={refetch}
       />

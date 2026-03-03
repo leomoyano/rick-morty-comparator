@@ -8,6 +8,7 @@ interface CharacterListProps {
   selectedCharacterId: number | null;
   onSelectCharacter: (character: Character) => void;
   isLoading: boolean;
+  loadingMessage: string;
   error: string | null;
   onRetry: () => void;
 }
@@ -17,13 +18,15 @@ export function CharacterList({
   selectedCharacterId,
   onSelectCharacter,
   isLoading,
+  loadingMessage,
   error,
   onRetry
 }: CharacterListProps) {
   if (isLoading) {
     return (
       <div className="stateBox" role="status" aria-live="polite">
-        <p className="stateText">Cargando personajes...</p>
+        <div className="spinner" aria-hidden="true" />
+        <p className="stateText">{loadingMessage}</p>
       </div>
     );
   }

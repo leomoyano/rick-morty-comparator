@@ -3,15 +3,7 @@ import type { CharacterPageResponse, Episode } from "@/types/rick-and-morty";
 const API_BASE_URL = "https://rickandmortyapi.com/api";
 const characterPageCache = new Map<number, CharacterPageResponse>();
 const characterPageInFlight = new Map<number, Promise<CharacterPageResponse>>();
-const MAX_RETRIES = 1;
 const REQUEST_TIMEOUT_MS = 8000;
-const MAX_RETRY_DELAY_MS = 1500;
-
-function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
 
 function parseRetryAfterMs(value: string | null): number | null {
   if (!value) {
@@ -24,11 +16,6 @@ function parseRetryAfterMs(value: string | null): number | null {
   }
 
   return null;
-}
-
-function getRetryDelayMs(retryAfterMs: number | null, attempt: number): number {
-  const fallbackBackoff = 400 * (attempt + 1);
-  return Math.min(retryAfterMs ?? fallbackBackoff, MAX_RETRY_DELAY_MS);
 }
 
 function createTimeoutSignal(signal?: AbortSignal): {
@@ -61,51 +48,44 @@ function createTimeoutSignal(signal?: AbortSignal): {
 
 export class ApiError extends Error {
   readonly status: number;
+  readonly retryAfterMs: number | null;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, retryAfterMs: number | null = null) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.retryAfterMs = retryAfterMs;
   }
 }
 
 async function fetchJson<T>(url: string, signal?: AbortSignal): Promise<T> {
-  let attempt = 0;
+  const { signal: timeoutSignal, cleanup } = createTimeoutSignal(signal);
+  let response: Response;
 
-  while (attempt <= MAX_RETRIES) {
-    const { signal: timeoutSignal, cleanup } = createTimeoutSignal(signal);
-    let response: Response;
-
-    try {
-      response = await fetch(url, { signal: timeoutSignal });
-    } catch (error) {
-      cleanup();
-
-      if (error instanceof Error && error.name === "AbortError") {
-        throw new ApiError("API request timeout", 408);
-      }
-
-      throw error;
-    }
-
+  try {
+    response = await fetch(url, { signal: timeoutSignal });
+  } catch (error) {
     cleanup();
 
-    if (response.ok) {
-      return (await response.json()) as T;
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new ApiError("API request timeout", 408);
     }
 
-    if (response.status === 429 && attempt < MAX_RETRIES) {
-      const retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"));
-      const backoffMs = getRetryDelayMs(retryAfterMs, attempt);
-      await wait(backoffMs);
-      attempt += 1;
-      continue;
-    }
-
-    throw new ApiError(`API request failed with status ${response.status}`, response.status);
+    throw error;
   }
 
-  throw new ApiError("API request failed after retries", 429);
+  cleanup();
+
+  if (response.ok) {
+    return (await response.json()) as T;
+  }
+
+  if (response.status === 429) {
+    const retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"));
+    throw new ApiError("API request rate limited", 429, retryAfterMs);
+  }
+
+  throw new ApiError(`API request failed with status ${response.status}`, response.status);
 }
 
 export async function getCharacters(
