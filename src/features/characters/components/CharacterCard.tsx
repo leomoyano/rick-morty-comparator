@@ -34,8 +34,10 @@ export function CharacterCard({ character, selected, onSelect }: CharacterCardPr
         className="avatar"
       />
       <div className="cardBody">
-        <h3 className="cardName">{character.name}</h3>
-        <p className="cardMeta">
+        <h3 className="cardName" title={character.name}>
+          {character.name}
+        </h3>
+        <p className="cardMeta" title={`${character.status} - ${character.species}`}>
           <span className={`statusDot ${toStatusClass(character.status)}`} aria-hidden="true" />
           {character.status} - {character.species}
         </p>

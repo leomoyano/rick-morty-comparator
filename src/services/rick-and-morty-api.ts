@@ -3,6 +3,26 @@ import type { CharacterPageResponse, Episode } from "@/types/rick-and-morty";
 const API_BASE_URL = "https://rickandmortyapi.com/api";
 const characterPageCache = new Map<number, CharacterPageResponse>();
 const characterPageInFlight = new Map<number, Promise<CharacterPageResponse>>();
+const MAX_RETRIES = 2;
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function parseRetryAfterMs(value: string | null): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds > 0) {
+    return seconds * 1000;
+  }
+
+  return null;
+}
 
 export class ApiError extends Error {
   readonly status: number;
@@ -15,13 +35,27 @@ export class ApiError extends Error {
 }
 
 async function fetchJson<T>(url: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(url, { signal });
+  let attempt = 0;
 
-  if (!response.ok) {
+  while (attempt <= MAX_RETRIES) {
+    const response = await fetch(url, { signal });
+
+    if (response.ok) {
+      return (await response.json()) as T;
+    }
+
+    if (response.status === 429 && attempt < MAX_RETRIES) {
+      const retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"));
+      const backoffMs = retryAfterMs ?? 500 * (attempt + 1);
+      await wait(backoffMs);
+      attempt += 1;
+      continue;
+    }
+
     throw new ApiError(`API request failed with status ${response.status}`, response.status);
   }
 
-  return (await response.json()) as T;
+  throw new ApiError("API request failed after retries", 429);
 }
 
 export async function getCharacters(
