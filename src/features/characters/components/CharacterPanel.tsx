@@ -20,8 +20,8 @@ export function CharacterPanel({
   const { data, isLoading, error, refetch } = useCharactersPage(page);
 
   const totalPages = data?.info.pages ?? 1;
-  const canGoPrev = page > 1;
-  const canGoNext = page < totalPages;
+  const canGoPrev = page > 1 && !isLoading;
+  const canGoNext = page < totalPages && !isLoading;
 
   return (
     <section className="panel" aria-label={title}>

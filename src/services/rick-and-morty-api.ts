@@ -1,6 +1,8 @@
 import type { CharacterPageResponse, Episode } from "@/types/rick-and-morty";
 
 const API_BASE_URL = "https://rickandmortyapi.com/api";
+const characterPageCache = new Map<number, CharacterPageResponse>();
+const characterPageInFlight = new Map<number, Promise<CharacterPageResponse>>();
 
 export class ApiError extends Error {
   readonly status: number;
@@ -30,7 +32,30 @@ export async function getCharacters(
     throw new Error("Page must be greater than 0");
   }
 
-  return fetchJson<CharacterPageResponse>(`${API_BASE_URL}/character?page=${page}`, signal);
+  const cached = characterPageCache.get(page);
+  if (cached) {
+    return cached;
+  }
+
+  const inFlight = characterPageInFlight.get(page);
+  if (inFlight && !signal) {
+    return inFlight;
+  }
+
+  const request = fetchJson<CharacterPageResponse>(`${API_BASE_URL}/character?page=${page}`, signal)
+    .then((payload) => {
+      characterPageCache.set(page, payload);
+      return payload;
+    })
+    .finally(() => {
+      characterPageInFlight.delete(page);
+    });
+
+  if (!signal) {
+    characterPageInFlight.set(page, request);
+  }
+
+  return request;
 }
 
 export async function getEpisodesByIds(ids: number[], signal?: AbortSignal): Promise<Episode[]> {
