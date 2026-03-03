@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Character } from "@/types/rick-and-morty";
+import { EpisodesComparisonBoard } from "@/features/episodes/components/EpisodesComparisonBoard";
 import { CharacterPanel } from "./CharacterPanel";
 
 export function CharactersComparison() {
@@ -26,6 +27,14 @@ export function CharactersComparison() {
       <div className="selectionInfo" aria-live="polite">
         <strong>Selected:</strong> {selectedCharacter1?.name ?? "None"} vs {selectedCharacter2?.name ?? "None"}
       </div>
+
+      {selectedCharacter1 && selectedCharacter2 ? (
+        <EpisodesComparisonBoard character1={selectedCharacter1} character2={selectedCharacter2} />
+      ) : (
+        <div className="stateBox" aria-live="polite">
+          <p className="stateText">Select one character in each panel to see episodes comparison.</p>
+        </div>
+      )}
     </section>
   );
 }
