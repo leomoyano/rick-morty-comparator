@@ -74,13 +74,29 @@ npm run dev
 npm run build
 npm run start
 npm run lint
+npm run test
+npm run test:coverage
 ```
+
+## Testing
+
+Current unit tests focus on core business logic and service edge cases:
+
+- `src/utils/episodes.test.ts`
+  - Set-based shared/only episode calculation
+  - invalid URL filtering and id deduplication
+  - bucket materialization from episode map
+- `src/services/rick-and-morty-api.test.ts`
+  - empty id short-circuit behavior
+  - single-response normalization to array
+  - sorted/deduped batch endpoint generation
+  - `429` and timeout (`408`) error mapping
 
 ## Tradeoffs
 
 - Chosen native `fetch + useEffect` instead of React Query to keep dependencies minimal.
 - No SSR/data prefetch optimization yet; current approach favors clarity and speed of implementation.
-- Tests are not included in this iteration to keep the solution within the target time budget.
+- UI integration tests are not included yet; current test scope prioritizes business logic reliability.
 
 ## What I would add next
 
