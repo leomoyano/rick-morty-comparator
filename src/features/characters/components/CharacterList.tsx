@@ -9,6 +9,7 @@ interface CharacterListProps {
   onSelectCharacter: (character: Character) => void;
   isLoading: boolean;
   loadingMessage: string;
+  emptyMessage: string;
   error: string | null;
   onRetry: () => void;
 }
@@ -19,6 +20,7 @@ export function CharacterList({
   onSelectCharacter,
   isLoading,
   loadingMessage,
+  emptyMessage,
   error,
   onRetry
 }: CharacterListProps) {
@@ -47,7 +49,7 @@ export function CharacterList({
   if (characters.length === 0) {
     return (
       <div className="stateBox">
-        <p className="stateText">No hay personajes para mostrar en esta pagina.</p>
+        <p className="stateText">{emptyMessage}</p>
       </div>
     );
   }

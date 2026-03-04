@@ -67,11 +67,20 @@ body {
 }
 
 .panelHeader {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.panelHeaderTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+}
+
+.panelSearchRow {
+  width: 100%;
 }
 
 .panelTitle {
@@ -88,6 +97,21 @@ body {
 .paginationText {
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.searchInput {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text);
+  background: #ffffff;
+}
+
+.searchInput:focus {
+  outline: 2px solid #99f6e4;
+  outline-offset: 1px;
+  border-color: var(--accent);
 }
 
 .button {
